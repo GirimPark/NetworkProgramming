@@ -129,9 +129,11 @@
   <ItemGroup>
     <ClCompile Include="MyFirstTCPClient.cpp" />
     <ClCompile Include="WinSockBase.cpp" />
+    <ClCompile Include="WinSockClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WinSockBase.h" />
+    <ClInclude Include="WinSockClient.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

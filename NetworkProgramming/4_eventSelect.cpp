@@ -45,6 +45,7 @@ private:
 
 bool CNetClient::Connect()
 {
+    /// 소켓, 이벤트 생성
     m_clientSocket = ::socket(AF_INET, SOCK_STREAM, 0);
 
     if (m_clientSocket == INVALID_SOCKET) return false;
@@ -54,25 +55,29 @@ bool CNetClient::Connect()
     // 클라이언트 소켓 핸들에 FD_CONNECT | FD_READ | FD_WRITE | FD_CLOSE 4가지의 네트워크 신호가 켜지면
     // m_clinetEvnet 이벤트 객체를 통해 알 수 있도록 연결한다.
     // m_clinetSocket을 넌블러킹 모드로 바꿔준다.
-    if (::WSAEventSelect(m_clientSocket, m_clientEvent, FD_CONNECT | FD_READ | FD_WRITE | FD_CLOSE) == SOCKET_ERROR) return 0;
+    if (::WSAEventSelect(m_clientSocket, m_clientEvent, FD_CONNECT | FD_READ | FD_WRITE | FD_CLOSE) == SOCKET_ERROR) 
+        return 0;
 
+    /// 클라이언트 소켓을 서버 주소에 연결한다.
     SOCKADDR_IN serverAddr;
     ::memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = ::htons(7777);
-    inet_pton(AF_INET, "172.21.1.68", &(serverAddr.sin_addr)); // 다른 주소로 바꿔서 테스트 해보세요.
+    inet_pton(serverAddr.sin_family, "127.0.0.1", &(serverAddr.sin_addr)); // 다른 주소로 바꿔서 테스트 해보세요.
 
     // m_clinetSocket이 블러킹 소켓이라면 접속할 수 있을 때까지 블러킹 된다.
     // 그러나 넌블러킹 소켓이므로 이벤트 객체를 통해 FD_CONNECT 네트워크 이벤트가 발생하여 해당 함수는 블럭되지 않는다.
-    if (::connect(m_clientSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) return false;
+    if (::connect(m_clientSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) 
+        return false;
 
-    cout << "Connecting" << endl;
+    cout << "Client : Connecting" << endl;
 
     return true;
 }
 
 void CNetClient::DoUpdate()
 {
+    /// 기다리는 이벤트
     int index = ::WSAWaitForMultipleEvents(1, &m_clientEvent, FALSE, 1000, FALSE);
 
     if (index == WSA_WAIT_FAILED)
@@ -80,14 +85,15 @@ void CNetClient::DoUpdate()
 
     index -= WSA_WAIT_EVENT_0;
 
+    /// 소켓에 대한 이벤트 검색
     WSANETWORKEVENTS networkEvents;
-
     if (::WSAEnumNetworkEvents(m_clientSocket, m_clientEvent, &networkEvents) == SOCKET_ERROR)
     {
         cout << "EnumNetworkEvents Error" << WSAGetLastError() << endl;
         return;
     }
 
+    /// 연결에 대한 이벤트, 연결 여부 확인
     if (networkEvents.lNetworkEvents & FD_CONNECT)
     {
         if (networkEvents.iErrorCode[FD_CONNECT_BIT] != 0)
@@ -96,11 +102,12 @@ void CNetClient::DoUpdate()
             return;
         }
 
-        cout << "Connected" << endl;
+        cout << "Client : Connected" << endl;
 
         m_isConnected = true;
     }
 
+    /// RECIVE
     if (networkEvents.lNetworkEvents & FD_READ)
     {
         if (networkEvents.iErrorCode[FD_READ_BIT] != 0)
@@ -123,9 +130,10 @@ void CNetClient::DoUpdate()
             return;
         }
 
-        cout << "Recv: " << buffer << endl;
+        cout << "Client : Recv " << buffer << endl;
     }
 
+    /// Send
     if (m_isConnected)
     {
         Sleep(1000);
@@ -136,7 +144,7 @@ void CNetClient::DoUpdate()
         }
         else
         {
-            cout << "send " << sendLen << endl;
+            cout << "Client : Send " << sendLen << endl;
         }
     }
 }
@@ -144,15 +152,17 @@ void CNetClient::DoUpdate()
 
 int main()
 {
+    /// 윈속 초기화
     WSAData wsaData;
-
     if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         return 0;
 
+    /// 서버 리슨 소켓 만들기
     SOCKET listenSocket = ::socket(AF_INET, SOCK_STREAM, 0);
     if (listenSocket == INVALID_SOCKET)
         return 0;
 
+    /// 리슨 소켓 포트에 바인딩
     SOCKADDR_IN serverAddr;
     ::memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
@@ -167,6 +177,7 @@ int main()
 
     cout << "Listen" << endl;
 
+    /// 리슨소켓에 리슨이벤트 등록
 	vector<WSAEVENT> wsaEvents;
     vector<Session> sessions;
     sessions.reserve(100);
@@ -179,13 +190,14 @@ int main()
     // WSAEventSelect 함수는 listenSocket을 넌블러킹 소켓으로 만든다.
     if (::WSAEventSelect(listenSocket, listenEvent, FD_ACCEPT) == SOCKET_ERROR) return 0;
 
-    CNetClient client;
-    client.Start(true);
+    /// 클라이언트 생성, 연결
+    //CNetClient client;
+    //client.Start(true);
 
-    if (false == client.Connect())
-    {
-        cout << "Connect Error " << WSAGetLastError() << endl;
-    }
+    //if (false == client.Connect())
+    //{
+    //    cout << "Connect Error " << WSAGetLastError() << endl;
+    //}
 
     while(true)
     {
@@ -215,7 +227,7 @@ int main()
 
             if (clientSocket != INVALID_SOCKET)
             {
-                cout << "Client COnnected" << endl;
+                cout << "Client Connected" << endl;
 
 
                 WSAEVENT clientEvent = ::WSACreateEvent();
@@ -231,8 +243,6 @@ int main()
         // 소켓 수신 버퍼(커널 메모리)에 읽어올 데이터가 있다면
         if (networkEvents.lNetworkEvents & FD_READ || networkEvents.lNetworkEvents & FD_WRITE)
         {
-            cout << "FD_WIRTE or FD_READ" << endl;
-
             if ((networkEvents.lNetworkEvents & FD_READ) && networkEvents.iErrorCode[FD_READ_BIT] != 0)
                 continue;
 
@@ -255,7 +265,7 @@ int main()
                 {
                     s.recvBytes = recvLen;
                 }
-                cout << "Recv Data= " << recvLen << " : " <<s.recvBuffer << endl;
+                cout << "Server : Recv Data= " << recvLen << " : " <<s.recvBuffer << endl;
             }
 
             // Send
@@ -273,12 +283,12 @@ int main()
                     s.sendBytes = 0;
                 }
 
-                cout << "Send Data= " << sendLen << endl;
+                cout << "Server : Send Data= " << sendLen << endl;
             }
         }
     }
 
-    client.Stop();
+    //client.Stop();
     WSACleanup();
     return 0;
 }
