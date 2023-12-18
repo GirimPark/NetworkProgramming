@@ -19,8 +19,7 @@ class WinSockServer : public WinSockBase
 private:
 	short m_listeningPort;
 	SOCKET m_listeningSocket;
-	WSAEVENT m_listeningEvent;
-	WSANETWORKEVENTS m_networkEvents;
+	
 	int m_index;
 
 	std::vector<WSAEVENT> m_wsaEvents;

@@ -9,8 +9,6 @@ class WinSockClient : public WinSockBase
 {
 private:
 	bool m_bConnected = false;
-	WSAEVENT m_clientEvent;
-	WSANETWORKEVENTS m_networkEvents;
 
 	std::string m_sendBuffer;
 

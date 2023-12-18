@@ -34,11 +34,11 @@ bool WinSockServer::SetupListen()
 
 	/// 리슨소켓에 리슨이벤트 등록
 	m_sessions.reserve(100);
-	m_listeningEvent = ::WSACreateEvent();
-	m_wsaEvents.push_back(m_listeningEvent);
+    m_event = ::WSACreateEvent();
+	m_wsaEvents.push_back(m_event);
 	m_sessions.push_back(Session{ m_listeningSocket });
 
-	if (::WSAEventSelect(m_listeningSocket, m_listeningEvent, FD_ACCEPT) == SOCKET_ERROR)
+	if (::WSAEventSelect(m_listeningSocket, m_event, FD_ACCEPT) == SOCKET_ERROR)
 		return 0;
 }
 
@@ -58,8 +58,6 @@ HRESULT WinSockServer::Update()
     return rt;
 }
 
-/// E_FAIL: continue
-/// E_ABORT: return
 HRESULT WinSockServer::Accept()
 {
     /// WSAWaitForMultipleEvents: 이벤트에 대한 통보를 받는다. 이때 인덱스로 어떤 이벤트인지 알 수 있다
