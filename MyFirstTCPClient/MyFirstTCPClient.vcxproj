@@ -104,6 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -128,12 +129,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MyFirstTCPClient.cpp" />
-    <ClCompile Include="WinSockBase.cpp" />
-    <ClCompile Include="WinSockClient.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WinSockBase.h" />
-    <ClInclude Include="WinSockClient.h" />
+    <ProjectReference Include="..\NetworkLibrary\NetworkLibrary.vcxproj">
+      <Project>{dfd6f1de-e293-47b6-936d-76b07531b690}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

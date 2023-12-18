@@ -40,7 +40,7 @@ private:
 
     bool m_isConnected = false;
 
-    char m_sendBuffer[BUFSIZE] = "김재현 롤 접어";
+    char m_sendBuffer[BUFSIZE] = "";
 };
 
 bool CNetClient::Connect()

@@ -3,7 +3,7 @@
  //eventSelect 예제 참고
  //eventSelect 서버에 연결 확인
 #include <iostream>
-#include "WinSockClient.h"
+#include "../NetworkLibrary/WinSockClient.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -15,14 +15,14 @@ int main()
     if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         return 0;
 
-    WinSockClient client;
+    WinSockClient client("127.0.0.1", 7777);
+    client.SetMessage("구다");
     client.Connect();
     while(true)
     {
         client.Update();
     }
 
-    client.Disconnect();
     WSACleanup();
     return 0;
 }
