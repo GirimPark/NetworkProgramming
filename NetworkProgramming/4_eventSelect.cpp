@@ -240,6 +240,10 @@ int main()
             }
         }
 
+        // 연결된 클라이언트로 메시지를 하나 보내고 소켓을 닫는다.
+        // 받은 메시지를 유저 수신 버퍼에 읽어오고 다시 해당 클라로 전송
+        // 수신 버퍼에 돌려 보낼 데이터가 없을 때까지 계속 보내고, 수신 버퍼가 비면 송신 버퍼의 데이터를 읽어온다.
+
         // 소켓 수신 버퍼(커널 메모리)에 읽어올 데이터가 있다면
         if (networkEvents.lNetworkEvents & FD_READ || networkEvents.lNetworkEvents & FD_WRITE)
         {

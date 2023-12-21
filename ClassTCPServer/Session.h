@@ -25,6 +25,8 @@ namespace netfish
 
 		void SetClient(Client* pClient);
 
+		const char* GetRecvMessage() { return m_readBuffer; }
+
 		SessionId GetSessionId() { return m_sessionId; }
 
 	private:

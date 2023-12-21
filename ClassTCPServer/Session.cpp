@@ -12,6 +12,7 @@ namespace netfish
 
 	Session::~Session()
 	{
+		m_pClient->Close();
 	}
 
 	void Session::Write(const char* pData, int len)
