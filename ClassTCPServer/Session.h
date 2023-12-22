@@ -21,6 +21,8 @@ namespace netfish
 
 		void Write(const char* pData, int len);
 
+		void ReadUpdate();
+
 		void NetUpdate();
 
 		void SetClient(Client* pClient);
@@ -30,9 +32,6 @@ namespace netfish
 		SessionId GetSessionId() { return m_sessionId; }
 
 	private:
-		void Read(char* pData, int len);
-
-	private:
 
 		Client* m_pClient = nullptr;
 
@@ -40,6 +39,10 @@ namespace netfish
 
 		char m_readBuffer[BUF_SIZE] = {};
 		char m_writeBuffer[BUF_SIZE] = {};
+
+		int m_readBytes = 0;
+		int m_writeBytes = 0;
+
 
 		SessionId m_sessionId = 0;
 

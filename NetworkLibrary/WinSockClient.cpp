@@ -40,6 +40,18 @@ bool WinSockClient::Connect()
 	return true;
 }
 
+void WinSockClient::DisConnect()
+{
+	// 송신 버퍼에 남은 것만 보내고 송신 종료
+	// 수신은 진행중이다
+	int iResult = shutdown(m_socket, SD_SEND);
+	cout << "Disconnect" << endl;
+	if(iResult == SOCKET_ERROR)
+	{
+		cout << "Disconnect Error " << WSAGetLastError() << endl;
+	}
+}
+
 HRESULT WinSockClient::Update()
 {
 	/// 기다리는 이벤트
@@ -96,6 +108,16 @@ HRESULT WinSockClient::Receive()
 		}
 
 		cout << "Client : Recv " << buffer << endl;
+	}
+
+	if(m_networkEvents.lNetworkEvents & FD_CLOSE)
+	{
+		if (m_networkEvents.iErrorCode[FD_CLOSE_BIT] != 0)
+		{
+			cout << "Close Error " <<WSAGetLastError() << endl;
+		}
+
+		m_bConnected = false;
 	}
 
 	return S_OK;

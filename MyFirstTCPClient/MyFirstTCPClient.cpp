@@ -15,12 +15,28 @@ int main()
     if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         return 0;
 
-    WinSockClient client("127.0.0.1", 7777);
+    WinSockClient client("172.21.1.61", 7777);
     client.SetMessage("구다");
     client.Connect();
+
+    bool isConnected = true;
+
     while(true)
     {
         client.Update();
+
+        if(GetAsyncKeyState(VK_UP) & 0x8001)
+        {
+            isConnected = false;
+
+            client.DisConnect();
+            break;
+        }
+    }
+
+    if(!isConnected)
+    {
+        Sleep(5000);
     }
 
     WSACleanup();

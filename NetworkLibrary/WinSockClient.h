@@ -21,6 +21,11 @@ public:
 public:
 	bool Connect();
 
+	void DisConnect();
+
+	bool GetConnected() const { return m_bConnected; }
+	void SetConnected(bool connected) { m_bConnected = connected; }
+
 public:
 	HRESULT Update() override;
 

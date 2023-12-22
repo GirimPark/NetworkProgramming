@@ -29,7 +29,7 @@ namespace netfish
 
 		m_pListener->Create(SOCK_STREAM, FD_ACCEPT);
 
-		m_pListener->Bind(7777, "127.0.0.1");//172.21.1.61
+		m_pListener->Bind(7777, "172.21.1.61");//172.21.1.61
 
 		m_pListener->Listen();
 	}
@@ -182,8 +182,7 @@ namespace netfish
 
 		if (pSession == nullptr) return;
 
-		printf("RecvMessage : %s\n", pSession->GetRecvMessage());
-		pSession->NetUpdate();
+		pSession->ReadUpdate();
 	}
 
 	void TCPRelayServer::onSend(AsyncSocket* pSocket)
