@@ -23,6 +23,7 @@ namespace netfish
 
 	void Session::ReadUpdate()
 	{
+		// readBuffer에 데이터를 쌓는 용도
 		// 소켓에 m_readBuffer를 던져서 읽어오게 한다.
 		// TODO: 받은 패킷을 어떻게 파싱할 것인가에 따라 구조가 바뀐다.
 
@@ -30,7 +31,7 @@ namespace netfish
 
 		int bufLen = BUF_SIZE - m_readBytes;
 
-		int nRead = m_pClient->Recv(m_readBuffer, bufLen);
+		int nRead = m_pClient->Recv(m_readBuffer + m_readBytes, bufLen);
 		m_readBytes += nRead;
 	}
 
@@ -40,33 +41,7 @@ namespace netfish
 	// 커널 메모리는 가상 메모리 기법을 사용하지 않는다. 
 	void Session::NetUpdate()
 	{
-		// 송신 버퍼에 데이터가 있으면 클라이언트에게 전송한다. m_pClient->Send
-		if(m_writeBytes)
-		{
-			int nSent = m_pClient->Send(m_writeBuffer, m_writeBytes);
-
-			if(nSent > 0)
-			{
-				m_writeBytes -= nSent;
-
-				if(m_writeBytes > 0)
-				{
-					memmove(m_writeBuffer, m_writeBuffer + nSent, m_writeBytes);
-				}
-			}
-			else if(nSent == 0)
-			{
-				// 소켓 버퍼가 가득 차서 전송이 불가능한 경우
-
-			}
-			else
-			{
-				// 소켓 에러
-
-			}
-		}
-
-		if(m_readBytes)
+		if (m_readBytes)
 		{
 			// 수신 버퍼에 데이터가 있으면 유효한 패킷인지 확인하고, 유효한 패킷이면 메시지를 처리한다.
 			// '유효한 패킷인지 확인' -> Read를 하고 m_readBuffer의 데이터를 분석
@@ -81,6 +56,35 @@ namespace netfish
 			// 우선, 받은 데이터를 그대로 송신 버퍼에 복사해본다.
 
 			memcpy(m_writeBuffer + m_writeBytes, m_readBuffer, m_readBytes);
+			m_writeBytes += m_readBytes;
+			memmove(m_readBuffer, m_readBuffer + m_readBytes, BUF_SIZE - m_readBytes);
+			m_readBytes = 0;
+		}
+
+		// 송신 버퍼에 데이터가 있으면 클라이언트에게 전송한다. m_pClient->Send
+		if(m_writeBytes)
+		{
+			int nSent = m_pClient->Send(m_writeBuffer, m_writeBytes);
+
+			if(nSent > 0)
+			{
+				m_writeBytes -= nSent;
+
+				if(m_writeBytes > 0)
+				{
+					memmove(m_writeBuffer, m_writeBuffer + nSent, m_writeBytes - nSent);
+				}
+			}
+			else if(nSent == 0)
+			{
+				// 소켓 버퍼가 가득 차서 전송이 불가능한 경우
+
+			}
+			else
+			{
+				// 소켓 에러
+
+			}
 		}
 	}
 

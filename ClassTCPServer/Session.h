@@ -2,6 +2,8 @@
 #include "Types.h"
 #include <string>
 
+const int _MIN = 100;
+
 namespace netfish
 {
 	class Client;

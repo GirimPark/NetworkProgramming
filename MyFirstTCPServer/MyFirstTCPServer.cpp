@@ -13,6 +13,7 @@ int main()
         return 0;
 
     WinSockServer server(7777);
+
     while(true)
     {
         HRESULT rt = server.Accept();

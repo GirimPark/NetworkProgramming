@@ -10,13 +10,15 @@ class WinSockClient : public WinSockBase
 private:
 	bool m_bConnected = false;
 
-	std::string m_sendBuffer;
+	char m_sendBuffer[BUFSIZE];
+	int m_sendBytes = 0;
 
 public:
 	WinSockClient(const char* serverIP, short serverPort);
 
 public:
-	void SetMessage(std::string_view message) { m_sendBuffer = message; }
+	void SetMessage(const char* message, int size) { memcpy(m_sendBuffer, message, size); }
+	void SendMessageMy(const char* message, int size) { memcpy(m_sendBuffer + m_sendBytes, message, size); m_sendBytes += size; }
 
 public:
 	bool Connect();

@@ -128,15 +128,16 @@ HRESULT WinSockClient::Send()
 	if (!m_bConnected)
 		return E_ABORT;
 
-	Sleep(1000);
+	//Sleep(1000);
 
-	int sendLen = ::send(m_socket, m_sendBuffer.c_str(), m_sendBuffer.size(), 0);
+	int sendLen = ::send(m_socket, m_sendBuffer, m_sendBytes, 0);
 	if (sendLen == SOCKET_ERROR && ::WSAGetLastError() != WSAEWOULDBLOCK) {
 		cout << "send Error " << ::WSAGetLastError() << endl;
 	}
 	else
 	{
-		cout << "Client : Send " << sendLen << endl;
+		cout << "Client : SendLen " << sendLen << endl;
+		m_sendBytes -= sendLen;
 	}
 
 	return S_OK;

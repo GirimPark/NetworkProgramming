@@ -29,7 +29,7 @@ namespace netfish
 
 		m_pListener->Create(SOCK_STREAM, FD_ACCEPT);
 
-		m_pListener->Bind(7777, "172.21.1.61");//172.21.1.61
+		m_pListener->Bind(7777, "127.0.0.1");//172.21.1.61
 
 		m_pListener->Listen();
 	}
@@ -92,6 +92,7 @@ namespace netfish
 		else pSocket = m_clients[index - 1];
 
 		WSANETWORKEVENTS networkEvents;
+		// 이벤트를 계속 발생시키다보면 힙 에러 발생(Critical error detected c0000374)
 		if (::WSAEnumNetworkEvents(pSocket->GetHandle(), wsaEvents[index], &networkEvents) == SOCKET_ERROR)
 		{
 			printf("WSAEnumNetworkEvents Error %d", WSAGetLastError());
@@ -141,6 +142,16 @@ namespace netfish
 
 			onClose(pSocket);
 		}
+
+		//네트워크 이벤트 처리가 모두 끝나면
+
+
+		// 각 세션 별로 수신 버퍼에 받아온 데이터를 처리하고
+		// 송신 버퍼에 있는 데이터를 실제 소켓 송신을 처리해야 합니다.
+		for (auto& session : m_sessions)
+		{
+			session.second->NetUpdate();
+		}
 	}
 
 	void TCPRelayServer::onAccept()
@@ -152,10 +163,10 @@ namespace netfish
 
 		if (m_pListener->OnAccept(pClient))
 		{
-			m_clients.push_back(pClient);
-			m_sessions[pSession->GetSessionId()] = pSession;
 
 			pSession->SetClient(pClient);
+			m_clients.push_back(pClient);
+			m_sessions[pSession->GetSessionId()] = pSession;
 
 			++m_ClientCount;
 
@@ -188,7 +199,6 @@ namespace netfish
 	void TCPRelayServer::onSend(AsyncSocket* pSocket)
 	{
 		printf("onSend  %s : %d\n", pSocket->GetIP().c_str(), pSocket->GetPort());
-
 	}
 
 	void TCPRelayServer::onClose(AsyncSocket* pSocket)
