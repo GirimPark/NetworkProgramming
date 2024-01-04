@@ -9,28 +9,45 @@
 // 유명한 라이브러리로는 FlatBuffer가 있다.
 #pragma once
 
+#include <cstddef>
 #pragma pack (push, 1)
 
-enum EPacketId
+enum EPacketId : short
 {
-	C2S_HELLO = 1,
-	S2C_HELLO = 2
+	PACKETID_START,
+
+	C2S_ACCESS,
+	S2C_ACCESS,
+	C2S_BROADCAST_MSG,
+	S2C_BROADCAST_MSG,
+
+	PACKETID_END
 };
 
 struct PacketHeader
 {
 	short size;
-	short id;
+	EPacketId id;
 };
 
-struct PacketC2S_Hello : PacketHeader
+struct PacketC2S_Access : PacketHeader
 {
-	char helloKey[100];
+	char* nickname;
 };
 
-struct PacketS2C_Welcome : PacketHeader
+struct PacketS2C_Access : PacketHeader
 {
-	char welcomeKey[100];
+	std::byte result;
+};
+
+struct PacketC2S_BroadcastMsg : PacketHeader
+{
+	char* clientMessage;
+};
+
+struct PacketS2C_BroadcastMsg : PacketHeader
+{
+	char* serverMessage;
 };
 
 #pragma pack (pop)

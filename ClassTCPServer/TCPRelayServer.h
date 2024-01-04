@@ -13,8 +13,10 @@ namespace netfish
 
 	class TCPRelayServer
 	{
-	public:
+	private:
 		TCPRelayServer() = default;
+
+	public:
 		~TCPRelayServer() = default;
 
 		void Start();
@@ -23,8 +25,20 @@ namespace netfish
 
 		void NetUpdate();
 
-	private:
+		void Process();
 
+	public:
+		void AddProcessPacket(char* packet);
+
+	private:
+		void BroadcastMessage(char* recvPacket);
+
+	public:
+		static TCPRelayServer* m_pInstance;
+
+		static TCPRelayServer* GetInstance();
+
+	private:
 		void onAccept();
 
 		void onReceive(AsyncSocket* pSocket);
@@ -37,6 +51,8 @@ namespace netfish
 
 		std::vector<Client*> m_clients;
 		std::unordered_map<SessionId, Session*> m_sessions;
+
+		std::vector<char*> m_processPackets;
 
 		Listener* m_pListener = nullptr;
 

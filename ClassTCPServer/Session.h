@@ -1,6 +1,6 @@
 #pragma once
 #include "Types.h"
-#include <string>
+#include <vector>
 
 const int _MIN = 100;
 
@@ -44,7 +44,6 @@ namespace netfish
 
 		int m_readBytes = 0;
 		int m_writeBytes = 0;
-
 
 		SessionId m_sessionId = 0;
 

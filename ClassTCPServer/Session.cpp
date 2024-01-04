@@ -1,5 +1,9 @@
 #include "Session.h"
 #include "Client.h"
+
+#include "TCPRelayServer.h"
+#include "../Common/MyProtocol.h"
+
 #include <assert.h>
 
 namespace netfish
@@ -19,6 +23,8 @@ namespace netfish
 	void Session::Write(const char* pData, int len)
 	{
 		// m_pClinet->Send를 바로 호출하지 않고 m_writeBuffer에 복사해둔다
+		memcpy(m_writeBuffer + m_writeBytes, pData, len);
+		m_writeBytes += len;
 	}
 
 	void Session::ReadUpdate()
@@ -43,6 +49,13 @@ namespace netfish
 	{
 		if (m_readBytes)
 		{
+			// 받은 데이터를 그대로 송신 버퍼에 복사해본다.
+			//memcpy(m_writeBuffer + m_writeBytes, m_readBuffer, m_readBytes);
+			//m_writeBytes += m_readBytes;
+			//memmove(m_readBuffer, m_readBuffer + m_readBytes, BUF_SIZE - m_readBytes);
+			//m_readBytes = 0;
+			//------------------------------------------------------------------------------------------------
+
 			// 수신 버퍼에 데이터가 있으면 유효한 패킷인지 확인하고, 유효한 패킷이면 메시지를 처리한다.
 			// '유효한 패킷인지 확인' -> Read를 하고 m_readBuffer의 데이터를 분석
 
@@ -52,13 +65,24 @@ namespace netfish
 			//    수신 버퍼에 30바이트 이상 있는지 확인한다.
 			// 3. 사이즈 정보가 충분하다면 패킷 아이디를 확인한다. 정의된 아이디가 아니라면 받지 않는다.(로그를 남기거나)
 			// 4. 모두 부합하다면 패킷 id별로 처리 함수를 호출하는 방법이 가장 간단하다. (이후에는 큐에 넣어서 처리한다.)
+			// 패킷 큐에 넣고 모든 세션의 패킷 큐가 완성되면 외부에서 처리한다.
 
-			// 우선, 받은 데이터를 그대로 송신 버퍼에 복사해본다.
+			// 패킷 데이터 검증
+			short size = (m_readBuffer[0] - '0') * 10 + (m_readBuffer[1] - '0');
+			if (size < 0 || size > m_readBytes)
+				return;
+			int packetId = (m_readBuffer[2] - '0') * 10 + (m_readBuffer[3] - '0');
+			if (packetId <= EPacketId::PACKETID_START || packetId >= EPacketId::PACKETID_END)
+				return;
 
-			memcpy(m_writeBuffer + m_writeBytes, m_readBuffer, m_readBytes);
-			m_writeBytes += m_readBytes;
-			memmove(m_readBuffer, m_readBuffer + m_readBytes, BUF_SIZE - m_readBytes);
-			m_readBytes = 0;
+			// 패킷을 처리할 Server에 패킷 추가
+			char* packet = new char[size];
+			memcpy(packet, m_readBuffer, size);
+			TCPRelayServer::GetInstance()->AddProcessPacket(packet);
+
+			// readBuffer 정렬
+			m_readBytes -= size;
+			memmove(m_readBuffer, m_readBuffer + size, m_readBytes);
 		}
 
 		// 송신 버퍼에 데이터가 있으면 클라이언트에게 전송한다. m_pClient->Send

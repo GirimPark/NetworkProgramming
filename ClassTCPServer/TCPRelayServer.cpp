@@ -1,10 +1,14 @@
 ﻿#include "TCPRelayServer.h"
 #include "Client.h"
 #include "Session.h"
+
+#include "../Common/MyProtocol.h"
 #include <cstdio>
 
 // link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
+
+netfish::TCPRelayServer* netfish::TCPRelayServer::m_pInstance = nullptr;
 
 namespace netfish
 {
@@ -19,7 +23,6 @@ namespace netfish
 			return (Accept(*pSocket));
 		}
 	};
-
 
 	void TCPRelayServer::Start()
 	{
@@ -57,6 +60,7 @@ namespace netfish
 
 	void TCPRelayServer::NetUpdate()
 	{
+		// 네트워크 이벤트처리
 		if (!m_pListener) return;
 
 		std::vector<WSAEVENT> wsaEvents;
@@ -81,7 +85,8 @@ namespace netfish
 			return;
 		}
 
-		if (index == WSA_WAIT_TIMEOUT) return;
+		if (index == WSA_WAIT_TIMEOUT) 
+			return;
 
 		index -= WSA_WAIT_EVENT_0;
 
@@ -142,15 +147,72 @@ namespace netfish
 
 			onClose(pSocket);
 		}
+	}
 
-		//네트워크 이벤트 처리가 모두 끝나면
-
-
+	void TCPRelayServer::Process()
+	{
 		// 각 세션 별로 수신 버퍼에 받아온 데이터를 처리하고
 		// 송신 버퍼에 있는 데이터를 실제 소켓 송신을 처리해야 합니다.
 		for (auto& session : m_sessions)
 		{
 			session.second->NetUpdate();
+		}
+
+		// 각 세션의 큐에서 완성된 패킷을 꺼내서
+		// 패킷 아이디를 확인해서 브로드 캐스팅 패킷이면 BroadCast 함수를 호출해 주자.
+		for (const auto& packet : m_processPackets)
+		{
+			int packetSize = (packet[0] - '0') * 10 + (packet[1] - '0');
+			int packetId = (packet[2] - '0') * 10 + (packet[3] - '0');
+
+			switch (packetId)
+			{
+			case EPacketId::C2S_ACCESS:
+				break;
+			case EPacketId::C2S_BROADCAST_MSG:
+				BroadcastMessage(packet);
+				break;
+			}
+		}
+
+		m_processPackets.clear();
+	}
+
+	void TCPRelayServer::AddProcessPacket(char* packet)
+	{
+		m_processPackets.emplace_back(packet);
+	}
+
+	void TCPRelayServer::BroadcastMessage(char* recvPacket)
+	{
+		PacketS2C_BroadcastMsg sendPacket;
+		sendPacket.size = (recvPacket[0] - '0') * 10 + (recvPacket[1] - '0');
+		sendPacket.id = EPacketId::S2C_BROADCAST_MSG;
+		sendPacket.serverMessage = new char[sendPacket.size - 4];
+		memcpy(sendPacket.serverMessage, recvPacket + 4, sendPacket.size - 4);
+
+		for(auto& session : m_sessions)
+		{
+			char* sendData = new char[sendPacket.size];
+
+			sendData[0] = sendPacket.size / 10 + '0';
+			sendData[1] = sendPacket.size % 10 + '0';
+			sendData[2] = sendPacket.id / 10 + '0';
+			sendData[3] = sendPacket.id % 10 + '0';
+
+			memcpy(sendData + 4, sendPacket.serverMessage, sendPacket.size);
+			session.second->Write(sendData, sendPacket.size);
+		}
+	}
+
+	TCPRelayServer* TCPRelayServer::GetInstance()
+	{
+		if (m_pInstance)
+			return m_pInstance;
+		else
+		{
+			m_pInstance = new TCPRelayServer;
+			return m_pInstance;
 		}
 	}
 

@@ -39,7 +39,7 @@ int main()
         }
         else if(GetAsyncKeyState('A') & 0x8001)
         {
-            client.SendMessageMy("hello", 6);
+            client.SendMessageMy("1003hello", 10);
 
             //PacketC2S_Hello c2sMsg;
             //c2sMsg.size = ;
